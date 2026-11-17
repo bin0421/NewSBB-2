@@ -75,7 +75,7 @@
 
 ### 004 댓글 작성
 
-- **[링크](COMMIT_004)**
+- **[링크](https://github.com/bin0421/NewSBB-2/commit/d8ab1a207d646a44c58cf58f95f9bea5c5c4017f)**
 - **작업**
   - 추가 : `ApiV1PostCommentController.write()` — `POST /api/v1/posts/{postId}/comments`, 요청 본문 `PostCommentWriteReqBody(content)`, 응답 `RsData<PostCommentDto>`
   - 추가 : `PostCommentDto`, `PostService.writeComment()`·`flush()`
@@ -84,3 +84,18 @@
   - 댓글은 글에 딸린 자원이므로 주소를 `/api/v1/posts/{postId}/comments` 로 두고, 클래스 레벨 `@RequestMapping` 의 `{postId}` 를 `@PathVariable` 로 받는다. 저장은 1단계와 같이 `Post.addComment()` 로 글의 댓글 리스트에 넣고 `cascade = PERSIST` 에 맡긴다.
   - 리스트에 넣기만 하면 INSERT 는 트랜잭션이 끝날 때 나가므로, 액션 메서드 안에서는 새 댓글의 id 가 아직 0 이다. `flush()` 로 INSERT 를 미리 실행해 `IDENTITY` 로 생성된 id 를 받은 뒤 응답을 만든다. flush 는 커밋이 아니어서 이후 오류가 나면 롤백된다.
   - 테스트에서 1번 글의 마지막 댓글을 꺼내 응답의 id·메시지와 대조하고, id 가 양수인지 확인해 flush 가 빠지면 실패하도록 했다.
+
+### 005 댓글 삭제
+
+- **[링크](COMMIT_005)**
+- **작업**
+  - 추가 : `ApiV1PostCommentController.delete()` — `DELETE /api/v1/posts/{postId}/comments/{id}`, 응답 `RsData<Void>`
+  - 추가 : `Post.findCommentById()`·`deleteComment()`, `PostService.deleteComment()`
+  - 추가 : 테스트 `ApiV1PostCommentControllerTest.t2` — 1번 글의 1번 댓글 삭제 후 처리한 컨트롤러·메서드, 200, `resultCode`, `msg`, DB 에서 다시 읽은 1번 글에 1번 댓글이 없고 댓글이 2건 남았음 확인
+  - 수정 : `Post.comments` 의 고아 객체 제거
+    - 이전 : `cascade = {PERSIST, REMOVE}`
+    - 이후 : `cascade = {PERSIST, REMOVE}, orphanRemoval = true`
+- **설명**
+  - 댓글은 글을 통해서 찾고 지운다. `findCommentById()` 는 글의 댓글 리스트에서 id 로 찾으므로, 다른 글의 댓글 번호를 주소에 넣으면 찾지 못한다.
+  - `deleteComment()` 는 리스트에서 댓글을 빼기만 한다. `orphanRemoval = true` 이면 부모 리스트에서 빠진 자식을 고아로 보고 트랜잭션이 끝날 때 DELETE 한다. 이 변경 감지는 트랜잭션 안에서만 동작하므로 액션 메서드에 `@Transactional` 이 필요하다.
+  - 테스트는 `EntityManager` 의 `flush()` 로 DELETE 를 실행하고 `clear()` 로 영속성 컨텍스트를 비운 뒤 글을 다시 조회한다. 메모리 속 리스트가 아니라 DB 에서 정말 지워졌는지를 확인한다.

@@ -3,6 +3,8 @@ package com.back.domain.post.postComment.controller;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
 import com.back.domain.post.postComment.entity.PostComment;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -28,6 +31,8 @@ public class ApiV1PostCommentControllerTest {
     private MockMvc mvc;
     @Autowired
     private PostService postService;
+    @PersistenceContext
+    private EntityManager em;
 
     @Test
     @DisplayName("댓글 작성")
@@ -59,5 +64,33 @@ public class ApiV1PostCommentControllerTest {
                 .andExpect(jsonPath("$.data.content").value("댓글 내용"));
 
         assertThat(postComment.getId()).isPositive();
+    }
+
+    @Test
+    @DisplayName("댓글 삭제")
+    void t2() throws Exception {
+        int postId = 1;
+        int id = 1;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/posts/%d/comments/%d".formatted(postId, id))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 댓글이 삭제되었습니다.".formatted(id)));
+
+        em.flush();
+        em.clear();
+
+        Post post = postService.findById(postId).get();
+
+        assertThat(post.findCommentById(id)).isEmpty();
+        assertThat(post.getComments()).hasSize(2);
     }
 }

@@ -62,3 +62,4 @@ NewSBB-2 진행 기록
 2026-11-17  002 글 작성 (ApiV1PostControllerTest.t1 통과)
 2026-11-17  003 글 삭제 (ApiV1PostControllerTest.t2 통과)
 2026-11-17  004 댓글 작성 (ApiV1PostCommentControllerTest.t1 통과)
+2026-11-17  005 댓글 삭제 (ApiV1PostCommentControllerTest.t2 통과). 앱을 8091 포트로 실행해 4개 API 응답(201/201/200/200) 확인
