@@ -60,7 +60,7 @@
 
 ### 003 글 삭제
 
-- **[링크](COMMIT_003)**
+- **[링크](https://github.com/bin0421/NewSBB-2/commit/a07fcbc6c0252bedc25236c9e471bb796cb089b9)**
 - **작업**
   - 추가 : `ApiV1PostController.delete()` — `DELETE /api/v1/posts/{id}`, 응답 `RsData<Void>`
   - 추가 : `PostService.findById()`·`delete()`
@@ -72,3 +72,15 @@
   - 삭제는 조회와 같은 주소에 HTTP 메서드만 `DELETE` 로 바꿔 표현한다. 돌려줄 데이터가 없으므로 `RsData<Void>` 로 `data` 가 비어 있음을 드러낸다. `"200-1"` 이므로 `ResponseAspect` 가 200 으로 응답한다.
   - 댓글 테이블이 글 id 를 외래키로 가지므로 댓글이 달린 글만 지우면 제약 조건 위반이 난다. `CascadeType.REMOVE` 로 글을 지울 때 연결된 댓글을 먼저 DELETE 한다.
   - 테스트 트랜잭션 안에서는 DELETE 가 바로 실행되지 않는다. `count()` 같은 조회 쿼리가 실행되기 전에 JPA 가 자동으로 flush 하므로, 댓글·글 DELETE 가 실제로 DB 에 나가 제약 조건까지 검사된 뒤 롤백된다.
+
+### 004 댓글 작성
+
+- **[링크](COMMIT_004)**
+- **작업**
+  - 추가 : `ApiV1PostCommentController.write()` — `POST /api/v1/posts/{postId}/comments`, 요청 본문 `PostCommentWriteReqBody(content)`, 응답 `RsData<PostCommentDto>`
+  - 추가 : `PostCommentDto`, `PostService.writeComment()`·`flush()`
+  - 추가 : 테스트 `ApiV1PostCommentControllerTest.t1` — 1번 글에 댓글 작성 후 처리한 컨트롤러·메서드, 201, `resultCode`, `msg`, 작성된 댓글의 `id`·`content`, id 가 0 이 아님 확인
+- **설명**
+  - 댓글은 글에 딸린 자원이므로 주소를 `/api/v1/posts/{postId}/comments` 로 두고, 클래스 레벨 `@RequestMapping` 의 `{postId}` 를 `@PathVariable` 로 받는다. 저장은 1단계와 같이 `Post.addComment()` 로 글의 댓글 리스트에 넣고 `cascade = PERSIST` 에 맡긴다.
+  - 리스트에 넣기만 하면 INSERT 는 트랜잭션이 끝날 때 나가므로, 액션 메서드 안에서는 새 댓글의 id 가 아직 0 이다. `flush()` 로 INSERT 를 미리 실행해 `IDENTITY` 로 생성된 id 를 받은 뒤 응답을 만든다. flush 는 커밋이 아니어서 이후 오류가 나면 롤백된다.
+  - 테스트에서 1번 글의 마지막 댓글을 꺼내 응답의 id·메시지와 대조하고, id 가 양수인지 확인해 flush 가 빠지면 실패하도록 했다.

@@ -61,3 +61,4 @@ NewSBB-2 진행 기록
 2026-11-17  001 샘플 글 3건·댓글 5건 생성 (BaseInitDataTest 통과)
 2026-11-17  002 글 작성 (ApiV1PostControllerTest.t1 통과)
 2026-11-17  003 글 삭제 (ApiV1PostControllerTest.t2 통과)
+2026-11-17  004 댓글 작성 (ApiV1PostCommentControllerTest.t1 통과)
