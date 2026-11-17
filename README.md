@@ -24,3 +24,22 @@
 - **링크** : 단어 "링크"를 누르면 해당 커밋 페이지로 이동해 직전 단계와의 코드 변경(diff)을 볼 수 있다
 - **작업** : 추가·수정·삭제한 기능, 객체, 클래스, 메서드
 - **설명** : 작업의 구현 방식과 동작 원리 (작업에 적은 내용은 반복하지 않는다)
+
+### 001 샘플 글 3건·댓글 5건 생성
+
+- **[링크](COMMIT_001)**
+- **작업**
+  - 추가 : `BaseEntity`, `Post`·`PostComment` 엔티티, `PostRepository`, `PostService.count()`·`write()`·`findAll()`, `Post.addComment()`, `BaseInitData`, `application-dev.yaml`, `application-test.yaml`
+  - 추가 : 의존성 `spring-boot-starter-data-jpa`, `spring-boot-h2console`, `h2`, `spring-boot-starter-data-jpa-test`
+  - 추가 : 테스트 `BaseInitDataTest.t1` — 글 3건(제목 1~3), 글별 댓글 수 3·2·0, 댓글 합계 5건 확인
+  - 수정 : `BackApplication`
+    - 이전 : `@SpringBootApplication`
+    - 이후 : `@SpringBootApplication` + `@EnableJpaAuditing`
+  - 수정 : `application.yaml`
+    - 이전 : 애플리케이션 이름만 설정
+    - 이후 : `dev` 프로필, `ddl-auto: update`, SQL 출력, `auto-commit: false`
+- **설명**
+  - `BaseEntity` 는 `@MappedSuperclass` 로 `id`·`createDate`·`modifyDate` 를 모든 엔티티에 물려준다. 날짜는 `AuditingEntityListener` 가 채우고, 이 리스너는 `@EnableJpaAuditing` 이 있어야 동작한다. `equals`·`hashCode` 는 `id` 로 비교한다.
+  - `PostComment` 는 `@ManyToOne(fetch = LAZY)` 로 글을 가리키고, `Post.comments` 는 `mappedBy = "post"` 인 양방향 관계다. 댓글은 `Post.addComment()` 로 글의 리스트에 넣기만 하고 저장은 `cascade = PERSIST` 에 맡긴다.
+  - `BaseInitData` 는 `ApplicationRunner` 빈으로 앱 구동 직후 실행된다. `@Lazy` 로 주입한 자기 자신(`self`)을 거쳐 `work1()` 을 호출해야 프록시를 통과해 `@Transactional` 이 적용되고, 트랜잭션이 끝날 때 댓글이 함께 INSERT 된다. 글이 이미 있으면 건너뛰어 재시작해도 중복 생성되지 않는다.
+  - 테스트는 `test` 프로필의 메모리 DB(`jdbc:h2:mem:db_test`)를 쓴다. 테스트 컨텍스트가 뜰 때도 `BaseInitData` 가 실행되므로 샘플 데이터가 들어간 상태에서 검사한다. `@Transactional` 이 있어 지연 로딩되는 `comments` 를 테스트 안에서 읽을 수 있다.
