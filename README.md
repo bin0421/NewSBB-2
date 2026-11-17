@@ -87,7 +87,7 @@
 
 ### 005 댓글 삭제
 
-- **[링크](COMMIT_005)**
+- **[링크](https://github.com/bin0421/NewSBB-2/commit/f7c7f83074b7e8a4f8d66404256cd56575fcd3d2)**
 - **작업**
   - 추가 : `ApiV1PostCommentController.delete()` — `DELETE /api/v1/posts/{postId}/comments/{id}`, 응답 `RsData<Void>`
   - 추가 : `Post.findCommentById()`·`deleteComment()`, `PostService.deleteComment()`
