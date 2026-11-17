@@ -23,11 +23,19 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    public Optional<Post> findById(int id) {
+        return postRepository.findById(id);
+    }
+
     public List<Post> findAll() {
         return postRepository.findAll();
     }
 
     public Optional<Post> findLatest() {
         return postRepository.findFirstByOrderByIdDesc();
+    }
+
+    public void delete(Post post) {
+        postRepository.delete(post);
     }
 }

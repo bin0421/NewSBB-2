@@ -46,7 +46,7 @@
 
 ### 002 글 작성
 
-- **[링크](COMMIT_002)**
+- **[링크](https://github.com/bin0421/NewSBB-2/commit/fcf4ad8d7d014f6f246bd9a3e71bf69d20e8932f)**
 - **작업**
   - 추가 : `ApiV1PostController.write()` — `POST /api/v1/posts`, 요청 본문 `PostWriteReqBody(title, content)`, 응답 `RsData<PostWriteResBody(totalCount, post)>`
   - 추가 : `PostDto`, `RsData`, `ResponseAspect`, `PostService.findLatest()`, `PostRepository.findFirstByOrderByIdDesc()`
@@ -57,3 +57,18 @@
   - `RsData` 는 `resultCode`·`msg`·`data` 로 응답 형식을 통일한다. `resultCode` 의 `-` 앞 숫자(`201`)를 `statusCode` 로 계산하고, `statusCode` 는 `@JsonIgnore` 로 JSON 에서 뺀다.
   - `ResponseAspect` 는 컨트롤러의 매핑 메서드가 `RsData` 를 돌려줄 때 끼어들어(`@Around`) `statusCode` 를 HTTP 응답코드로 설정한다. 그래서 액션 메서드는 `ResponseEntity` 없이 `"201-1"` 만으로 201 을 응답한다.
   - 테스트는 `@AutoConfigureMockMvc` 의 `MockMvc` 로 서버 없이 요청을 보내고, 요청(`perform`)과 검증(`andExpect`)을 나눠 적는다. 기대값은 DB 에서 가장 최신 글(`findLatest`)과 전체 글 수를 가져와 응답과 대조한다. `@Transactional` 로 테스트가 끝나면 작성한 글이 롤백된다.
+
+### 003 글 삭제
+
+- **[링크](COMMIT_003)**
+- **작업**
+  - 추가 : `ApiV1PostController.delete()` — `DELETE /api/v1/posts/{id}`, 응답 `RsData<Void>`
+  - 추가 : `PostService.findById()`·`delete()`
+  - 추가 : 테스트 `ApiV1PostControllerTest.t2` — 1번 글 삭제 후 처리한 컨트롤러·메서드, 200, `resultCode`, `msg`, 남은 글 수 2, 1번 글 없음 확인
+  - 수정 : `Post.comments` 의 cascade
+    - 이전 : `cascade = {PERSIST}`
+    - 이후 : `cascade = {PERSIST, REMOVE}`
+- **설명**
+  - 삭제는 조회와 같은 주소에 HTTP 메서드만 `DELETE` 로 바꿔 표현한다. 돌려줄 데이터가 없으므로 `RsData<Void>` 로 `data` 가 비어 있음을 드러낸다. `"200-1"` 이므로 `ResponseAspect` 가 200 으로 응답한다.
+  - 댓글 테이블이 글 id 를 외래키로 가지므로 댓글이 달린 글만 지우면 제약 조건 위반이 난다. `CascadeType.REMOVE` 로 글을 지울 때 연결된 댓글을 먼저 DELETE 한다.
+  - 테스트 트랜잭션 안에서는 DELETE 가 바로 실행되지 않는다. `count()` 같은 조회 쿼리가 실행되기 전에 JPA 가 자동으로 flush 하므로, 댓글·글 DELETE 가 실제로 DB 에 나가 제약 조건까지 검사된 뒤 롤백된다.
