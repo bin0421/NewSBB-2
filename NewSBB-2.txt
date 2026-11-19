@@ -1,7 +1,7 @@
 NewSBB-2 진행 기록
 ==================
 - 저장소 : https://github.com/bin0421/NewSBB-2
-- 로컬 폴더 : C:\projects\NewSBB-2
+- 로컬 폴더 : C:\projects\NewSBB\NewSBB-2
 - 시작일 : 2026-11-17
 - 용도 : 프롬프트, 결정 사항, 진행 과정을 기록한다.
 
